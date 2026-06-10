@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的成长追踪</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F7F4;
+    --surface: #ffffff;
+    --border: #EAEAE6;
+    --text: #1C1C16;
+    --muted: #9090888;
+    --ielts: #6DB8A4;
+    --course: #A78BFA;
+    --gaming: #F59E7A;
+    --custom: #60A5FA;
+  }
+
+  body {
+    font-family: 'DM Sans', 'PingFang SC', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 22px 28px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-left p { font-size: 13px; color: #909088; margin-top: 3px; }
+
+  .summary-row { display: flex; gap: 18px; }
+  .summary-item { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .summary-item span { font-size: 11px; color: #909088; letter-spacing: 0.3px; }
+  .mini-arc-wrap { position: relative; width: 46px; height: 46px; }
+  .mini-arc-label {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px; font-weight: 700; font-family: monospace;
+  }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 18px;
+    padding: 22px 28px 40px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 20px 22px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .card-icon { font-size: 18px; }
+  .card-title { font-weight: 600; font-size: 15px; flex: 1; }
+  .badge {
+    font-size: 12px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+    font-family: monospace;
+  }
+  .btn {
+    padding: 6px 14px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg); color: #606058;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: #EFEFEB; }
+  .btn-filled { color: #fff; border-color: transparent; }
+  .btn-filled:hover { filter: brightness(0.92); }
+
+  /* PROGRESS BAR */
+  .prog-bar {
+    height: 5px; background: #EAEAE6;
+    border-radius: 99px; overflow: hidden; margin-bottom: 14px;
+  }
+  .prog-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+
+  /* ARC + LOG */
+  .arc-row { display: flex; align-items: center; gap: 20px; }
+  .arc-wrap { position: relative; flex-shrink: 0; }
+  .arc-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none;
+  }
+  .arc-num { font-size: 22px; font-weight: 700; font-family: monospace; line-height: 1; }
+  .arc-sub { font-size: 11px; color: #A0A090; margin-top: 2px; }
+  .log-list { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+  .log-item { display: flex; flex-direction: column; gap: 1px; }
+  .log-date { font-size: 11px; color: #B0B0A0; font-family: monospace; }
+  .log-note { font-size: 13px; color: #444440; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* TASKS */
+  .task-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 0; cursor: pointer;
+    border-bottom: 1px solid #F5F5F0;
+    transition: opacity 0.15s;
+  }
+  .task-row:last-child { border-bottom: none; }
+  .task-row:hover { opacity: 0.75; }
+  .checkbox {
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 2px solid #C8C8C0;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s;
+    font-size: 11px; color: #fff;
+  }
+  .task-name { font-size: 13.5px; flex: 1; }
+
+  /* MINI BAR CHART */
+  .mini-chart {
+    display: flex; gap: 5px; height: 58px;
+    align-items: flex-end; margin: 14px 0 4px; padding: 0 2px;
+  }
+  .bar-col {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+    height: 100%; justify-content: flex-end;
+  }
+  .bar-fill { width: 100%; border-radius: 3px 3px 0 0; min-height: 3px; transition: height 0.4s ease; }
+  .bar-label { font-size: 9px; color: #B0B0A0; font-family: monospace; white-space: nowrap; }
+
+  /* INPUT GROUP */
+  .input-group {
+    display: flex; gap: 8px; margin-top: 14px; align-items: center; flex-wrap: wrap;
+  }
+  .inp {
+    flex: 1; min-width: 80px;
+    border: 1px solid #E8E8E4; border-radius: 8px;
+    padding: 7px 10px; font-size: 13px;
+    outline: none; background: var(--bg); color: var(--text);
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .inp:focus { border-color: #B0B0A8; }
+  .inp-sm { flex: none; width: 90px; }
+  .inp-xs { flex: none; width: 70px; }
+
+  /* CUSTOM ITEM */
+  .custom-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid #F5F5F0;
+  }
+  .custom-item:last-of-type { border-bottom: none; }
+  .empty-hint { color: #B0B0A0; font-size: 13px; margin-top: 10px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1C1C16; color: #fff; padding: 10px 20px;
+    border-radius: 20px; font-size: 13px; font-weight: 500;
+    transition: transform 0.3s ease; z-index: 99; pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* DB MODAL */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35); z-index: 100;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 20px; width: 100%; max-width: 680px;
+    max-height: 85vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1px solid #EAEAE6;
+    position: sticky; top: 0; background: #fff; border-radius: 20px 20px 0 0;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: #F0F0EC; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .db-section { padding: 18px 24px; border-bottom: 1px solid #F5F5F0; }
+  .db-section:last-child { border-bottom: none; }
+  .db-section-title {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #909088; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .db-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .db-table th {
+    text-align: left; padding: 6px 10px;
+    background: #F7F7F4; color: #606058; font-weight: 600;
+    font-size: 11px; border-radius: 4px;
+  }
+  .db-table td { padding: 7px 10px; border-bottom: 1px solid #F5F5F0; color: #1C1C16; }
+  .db-table tr:last-child td { border-bottom: none; }
+  .db-key { font-family: monospace; font-size: 11px; background: #F0F0EC; padding: 2px 6px; border-radius: 4px; color: #606058; }
+
+  .db-btn {
+    padding: 6px 14px; border-radius: 8px;
+    border: 1px solid #EAEAE6; background: #F7F7F4;
+    color: #606058; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .db-btn:hover { background: #EFEFEB; }
+
+  @media (max-width: 600px) {
+    .header { padding: 16px 16px 14px; }
+    .grid { padding: 16px 16px 40px; gap: 14px; }
+    .summary-row { gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <h1>我的成长追踪 ✨</h1>
+    <p id="today-label"></p>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="summary-row" id="summary-row"></div>
+    <button class="btn" onclick="openDB()" style="font-size:12px;display:flex;align-items:center;gap:5px">🗄️ 数据库</button>
+  </div>
+</header>
+
+<!-- DB MODAL -->
+<div class="modal-bg" id="db-modal" onclick="closeDBOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🗄️ 数据库 · localStorage</span>
+      <button class="modal-close" onclick="closeDB()">✕</button>
+    </div>
+    <div id="db-content"></div>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Storage ────────────────────────────────────────────────────────────────
+const KEYS = { ielts: 'trk_ielts', courses: 'trk_courses', gaming: 'trk_gaming', custom: 'trk_custom' };
+
+const defaults = {
+  ielts: {
+    current: 6.0, target: 7.5,
+    logs: [{ date: '2026-06-01', note: '完成 CAM4 Test 2 阅读', score: 6.0 }]
+  },
+  courses: {
+    tasks: [
+      { id: 1, name: '社会工作案例分析', done: true },
+      { id: 2, name: '应急管理期末报告', done: true },
+      { id: 3, name: '公共行政期中作业', done: false },
+      { id: 4, name: '社区调研报告', done: false }
+    ]
+  },
+  gaming: {
+    weeklyLimit: 14,
+    logs: [
+      { date: '2026-06-08', hours: 2.5 },
+      { date: '2026-06-09', hours: 1.5 },
+      { date: '2026-06-10', hours: 1.0 }
+    ]
+  },
+  custom: { items: [] }
+};
+
+function load(key) {
+  try { return JSON.parse(localStorage.getItem(KEYS[key])) || defaults[key]; }
+  catch { return defaults[key]; }
+}
+function save(key, data) {
+  localStorage.setItem(KEYS[key], JSON.stringify(data));
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ─── SVG Arc ─────────────────────────────────────────────────────────────────
+function arcSVG(progress, color, size, stroke) {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - Math.min(Math.max(progress, 0), 1));
+  return `<svg width="${size}" height="${size}" style="transform:rotate(-90deg)">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#EAEAE6" stroke-width="${stroke}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"
+      style="transition:stroke-dashoffset 0.8s cubic-bezier(.4,0,.2,1)"/>
+  </svg>`;
+}
+
+// ─── Date Label ──────────────────────────────────────────────────────────────
+const days = ['日','一','二','三','四','五','六'];
+const now = new Date();
+document.getElementById('today-label').textContent =
+  `${now.getMonth()+1}月${now.getDate()}日 · 周${days[now.getDay()]} · 加油 💪`;
+
+// ─── Summary ─────────────────────────────────────────────────────────────────
+function updateSummary() {
+  const ielts = load('ielts');
+  const courses = load('courses');
+  const gaming = load('gaming');
+  const ip = (ielts.current - 5.0) / (ielts.target - 5.0);
+  const cp = courses.tasks.filter(t=>t.done).length / courses.tasks.length;
+  const gw = gaming.logs.slice(0,7).reduce((s,l)=>s+l.hours,0);
+  const gp = Math.min(gw / gaming.weeklyLimit, 1);
+  const items = [
+    { label:'雅思', prog:ip, color:'#6DB8A4' },
+    { label:'课程', prog:cp, color:'#A78BFA' },
+    { label:'游戏', prog:gp, color:'#F59E7A' }
+  ];
+  document.getElementById('summary-row').innerHTML = items.map(s => `
+    <div class="summary-item">
+      <div class="mini-arc-wrap">
+        ${arcSVG(s.prog, s.color, 46, 5)}
+        <span class="mini-arc-label" style="color:${s.color}">${Math.round(s.prog*100)}%</span>
+      </div>
+      <span>${s.label}</span>
+    </div>`).join('');
+}
+
+// ─── IELTS Card ───────────────────────────────────────────────────────────────
+function renderIELTS() {
+  const d = load('ielts');
+  const prog = (d.current - 5.0) / (d.target - 5.0);
+  const el = document.getElementById('card-ielts');
+  el.innerHTML = `
+    <div class="card-header">
+      <span class="card-icon">📖</span>
+      <span class="card-title">雅思备考</span>
+      <button class="btn" onclick="toggleIELTSForm()">+ 记录</button>
+    </div>
+    <div class="arc-row">
+      <div class="arc-wrap">
+        ${arcSVG(prog, '#6DB8A4', 110, 8)}
+        <div class="arc-center">
+          <span class="arc-num" style="color:#6DB8A4">${d.current.toFixed(1)}</span>
+          <span class="arc-sub">目标 ${d.target}</span>
+        </div>
+      </div>
+      <div class="log-list">
+        ${d.logs.slice(0,3).map(l=>`
+          <div class="log-item">
+            <span class="log-date">${l.date}</span>
+            <span class="log-note">${l.note}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div id="ielts-form" style="display:none">
+      <div class="input-group">
+        <input class="inp" id="ielts-note" placeholder="学习内容">
+        <input class="inp inp-sm" id="ielts-score" placeholder="分数（选填）" type="number" step="0.5" min="0" max="9">
+        <button class="btn btn-filled" style="background:#6DB8A4" onclick="addIELTSLog()">保存</button>
+      </div>
+    </div>`;
+}
+
+function toggleIELTSForm() {
+  const f = document.getElementById('ielts-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function addIELTSLog() {
+  const note = document.getElementById('ielts-note').value.trim();
+  const scoreRaw = document.getElementById('ielts-score').value;
+  if (!note) { toast('请填写学习内容'); return; }
+  const d = load('ielts');
+  const score = parseFloat(scoreRaw) || d.current;
+  d.logs.unshift({ date: new Date().toISOString().split('T')[0], note, score });
+  d.current = score;
+  save('ielts', d);
+  renderIELTS(); updateSummary(); toast('已记录 ✓');
+}
+
+// ─── Courses Card ─────────────────────────────────────────────────────────────
+function renderCourses() {
+  const d = load('courses');
+  const done = d.tasks.filter(t=>t.done).length;
+  const prog = d.tasks.length ? done/d.tasks.length : 0;
+  const el = document.getElementById('card-courses');
+  el.innerHTML = `
+    <div class="card-header">
+      <span class="card-icon">🎓</span>
+      <span class="card-title">课程作业</span>
+      <span class="badge" style="background:#A78BFA22;color:#A78BFA">${done}/${d.tasks.length}</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${prog*100}%;background:#A78BFA"></div></div>
+    <div id="task-list">
+      ${d.tasks.map(t=>`
+        <div class="task-row" onclick="toggleTask(${t.id})">
+          <div class="checkbox" style="border-color:${t.done?'#A78BFA':'#C8C8C0'};background:${t.done?'#A78BFA':'transparent'}">
+            ${t.done?'✓':''}
+          </div>
+          <span class="task-name" style="text-decoration:${t.done?'line-through':'none'};color:${t.done?'#A0A090':'#1C1C16'}">${t.name}</span>
+        </div>`).join('')}
+    </div>
+    <div class="input-group">
+      <input class="inp" id="course-new" placeholder="添加新任务">
+      <button class="btn btn-filled" style="background:#A78BFA" onclick="addTask()">添加</button>
+    </div>`;
+  const inp = document.getElementById('course-new');
+  inp.addEventListener('keydown', e => { if(e.key==='Enter') addTask(); });
+}
+
+function toggleTask(id) {
+  const d = load('courses');
+  d.tasks = d.tasks.map(t => t.id===id ? {...t, done:!t.done} : t);
+  save('courses', d); renderCourses(); updateSummary();
+}
+function addTask() {
+  const inp = document.getElementById('course-new');
+  const name = inp.value.trim();
+  if (!name) return;
+  const d = load('courses');
+  d.tasks.push({ id: Date.now(), name, done: false });
+  save('courses', d); renderCourses(); updateSummary(); toast('任务已添加 ✓');
+}
+
+// ─── Gaming Card ──────────────────────────────────────────────────────────────
+function renderGaming() {
+  const d = load('gaming');
+  const thisWeek = d.logs.slice(0,7).reduce((s,l)=>s+l.hours,0);
+  const prog = Math.min(thisWeek/d.weeklyLimit, 1);
+  const overLimit = prog > 0.85;
+  const barColor = overLimit ? '#FC8181' : '#F59E7A';
+  const badgeStyle = overLimit
+    ? 'background:#FEE2E2;color:#E53E3E'
+    : 'background:#F59E7A22;color:#F59E7A';
+  const recent = d.logs.slice(0,7).reverse();
+  const maxH = Math.max(...recent.map(l=>l.hours), 1);
+  const el = document.getElementById('card-gaming');
+  el.innerHTML = `
+    <div class="card-header">
+      <span class="card-icon">🎮</span>
+      <span class="card-title">游戏时间</span>
+      <span class="badge" style="${badgeStyle}">${thisWeek.toFixed(1)}h / ${d.weeklyLimit}h</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${prog*100}%;background:${barColor}"></div></div>
+    <div class="mini-chart">
+      ${recent.map(l=>`
+        <div class="bar-col">
+          <div class="bar-fill" style="height:${(l.hours/maxH)*100}%;background:${barColor}"></div>
+          <span class="bar-label">${l.date.slice(5)}</span>
+        </div>`).join('')}
+    </div>
+    <div class="input-group">
+      <input class="inp" id="gaming-hours" placeholder="今日游戏时长（小时）" type="number" step="0.5" min="0">
+      <button class="btn btn-filled" style="background:#F59E7A" onclick="addGamingHours()">记录</button>
+    </div>`;
+}
+
+function addGamingHours() {
+  const val = parseFloat(document.getElementById('gaming-hours').value);
+  if (!val || val<=0) { toast('请填写有效时长'); return; }
+  const d = load('gaming');
+  d.logs.unshift({ date: new Date().toISOString().split('T')[0], hours: val });
+  save('gaming', d); renderGaming(); updateSummary(); toast('已记录 ✓');
+}
+
+// ─── Custom Card ──────────────────────────────────────────────────────────────
+function renderCustom() {
+  const d = load('custom');
+  const el = document.getElementById('card-custom');
+  el.innerHTML = `
+    <div class="card-header">
+      <span class="card-icon">✨</span>
+      <span class="card-title">自定义追踪</span>
+      <button class="btn" onclick="toggleCustomForm()">+ 新增</button>
+    </div>
+    ${d.items.length===0 ? '<p class="empty-hint">点击「新增」添加你想监控的任何指标~</p>' : ''}
+    ${d.items.map(it=>`
+      <div class="custom-item">
+        <span class="task-name">${it.label}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input class="inp inp-sm" value="${it.value}" onblur="updateCustomItem(${it.id}, this.value)" style="text-align:right">
+          <span style="color:#A0A090;font-size:12px">${it.unit}</span>
+        </div>
+      </div>`).join('')}
+    <div id="custom-form" style="display:none">
+      <div class="input-group" style="flex-wrap:wrap">
+        <input class="inp" id="c-label" placeholder="指标名称（如：每日单词量）">
+        <input class="inp inp-sm" id="c-value" placeholder="当前值">
+        <input class="inp inp-xs" id="c-unit" placeholder="单位">
+        <button class="btn btn-filled" style="background:#60A5FA" onclick="addCustomItem()">保存</button>
+      </div>
+    </div>`;
+}
+
+function toggleCustomForm() {
+  const f = document.getElementById('custom-form');
+  f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+function addCustomItem() {
+  const label = document.getElementById('c-label').value.trim();
+  if (!label) { toast('请填写指标名称'); return; }
+  const d = load('custom');
+  d.items.push({
+    id: Date.now(),
+    label,
+    value: document.getElementById('c-value').value,
+    unit: document.getElementById('c-unit').value,
+    logs: []
+  });
+  save('custom', d); renderCustom(); toast('指标已添加 ✓');
+}
+function updateCustomItem(id, val) {
+  const d = load('custom');
+  d.items = d.items.map(it => it.id===id ? {...it, value: val, logs:[{date:new Date().toISOString().split('T')[0],value:val},...it.logs]} : it);
+  save('custom', d); toast('已更新 ✓');
+}
+
+// ─── DB Modal ─────────────────────────────────────────────────────────────────
+function openDB() {
+  const ielts = load('ielts');
+  const courses = load('courses');
+  const gaming = load('gaming');
+  const custom = load('custom');
+
+  const sections = [
+    {
+      key: 'trk_ielts', title: '📖 雅思备考', color: '#6DB8A4',
+      tables: [
+        {
+          name: '当前状态',
+          cols: ['字段', '值'],
+          rows: [
+            ['current_score', ielts.current.toFixed(1)],
+            ['target_score', ielts.target.toFixed(1)],
+            ['log_count', ielts.logs.length]
+          ]
+        },
+        {
+          name: '学习记录 (ielts_logs)',
+          cols: ['id', 'date', 'note', 'score'],
+          rows: ielts.logs.map((l,i) => [i+1, l.date, l.note, l.score ?? '-'])
+        }
+      ]
+    },
+    {
+      key: 'trk_courses', title: '🎓 课程作业', color: '#A78BFA',
+      tables: [
+        {
+          name: '任务列表 (course_tasks)',
+          cols: ['id', 'name', 'done'],
+          rows: courses.tasks.map(t => [t.id, t.name, t.done ? '✅ 已完成' : '⬜ 未完成'])
+        }
+      ]
+    },
+    {
+      key: 'trk_gaming', title: '🎮 游戏时间', color: '#F59E7A',
+      tables: [
+        {
+          name: '配置',
+          cols: ['字段', '值'],
+          rows: [['weekly_limit_hours', gaming.weeklyLimit]]
+        },
+        {
+          name: '游戏记录 (gaming_logs)',
+          cols: ['id', 'date', 'hours'],
+          rows: gaming.logs.map((l,i) => [i+1, l.date, l.hours + 'h'])
+        }
+      ]
+    },
+    {
+      key: 'trk_custom', title: '✨ 自定义追踪', color: '#60A5FA',
+      tables: [
+        {
+          name: '自定义指标 (custom_items)',
+          cols: ['id', 'label', 'value', 'unit'],
+          rows: custom.items.length ? custom.items.map(it => [it.id, it.label, it.value, it.unit]) : [['—','暂无数据','—','—']]
+        }
+      ]
+    }
+  ];
+
+  document.getElementById('db-content').innerHTML = sections.map(s => `
+    <div class="db-section">
+      <div class="db-section-title">
+        <span style="color:${s.color}">${s.title}</span>
+        <span class="db-key">${s.key}</span>
+      </div>
+      ${s.tables.map(t => `
+        <div style="margin-bottom:14px">
+          <div style="font-size:12px;font-weight:600;color:#606058;margin-bottom:6px">${t.name}</div>
+          <table class="db-table">
+            <tr>${t.cols.map(c=>`<th>${c}</th>`).join('')}</tr>
+            ${t.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}
+          </table>
+        </div>`).join('')}
+    </div>`).join('');
+
+  document.getElementById('db-modal').classList.add('open');
+}
+function closeDB() { document.getElementById('db-modal').classList.remove('open'); }
+function closeDBOutside(e) { if(e.target===document.getElementById('db-modal')) closeDB(); }
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.getElementById('grid').innerHTML = `
+  <div class="card" id="card-ielts"></div>
+  <div class="card" id="card-courses"></div>
+  <div class="card" id="card-gaming"></div>
+  <div class="card" id="card-custom"></div>`;
+
+renderIELTS();
+renderCourses();
+renderGaming();
+renderCustom();
+updateSummary();
+</script>
+</body>
+</html>
